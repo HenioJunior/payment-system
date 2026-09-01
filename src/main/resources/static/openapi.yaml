@@ -1,0 +1,220 @@
+openapi: 3.0.1
+info:
+  title: Payment Service API
+  description: API for processing payments with daily limit validation
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@paymentservice.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Payment
+    description: Payment operations
+
+paths:
+  /api/payments:
+    post:
+      tags: [Payment]
+      summary: Create a new payment
+      description: Creates a payment with PENDING status, validating the daily limit for the payer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid input or daily limit exceeded
+        '500':
+          description: Internal server error
+
+    get:
+      tags: [Payment]
+      summary: Get all payments
+      description: Returns a list of all payments in the system
+      responses:
+        '200':
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentResponse'
+        '500':
+          description: Internal server error
+
+  /api/payments/{paymentId}:
+    get:
+      tags: [Payment]
+      summary: Get payment by ID
+      description: Returns a single payment by its unique identifier
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: ID of the payment to be retrieved
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: Payment not found
+        '500':
+          description: Internal server error
+
+    put:
+      tags: [Payment]
+      summary: Update payment status
+      description: Updates the status of an existing payment.
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: ID of the payment to be updated
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentUpdateRequest'
+      responses:
+        '200':
+          description: Payment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid input
+        '404':
+          description: Payment not found
+        '500':
+          description: Internal server error
+
+  /api/payments/payer/{payerId}:
+    get:
+      tags: [Payment]
+      summary: Get payments by payer ID
+      description: Returns all payments associated with a specific payer
+      parameters:
+        - name: payerId
+          in: path
+          required: true
+          description: ID of the payer whose payments should be retrieved
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of payments for the specified payer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: No payments found for the given payer
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    PaymentStatus:
+      type: string
+      description: Current status of the payment
+      enum:
+        - PENDING
+        - PAID
+        - FRAUD
+      example: PENDING
+
+    PaymentSource:
+      type: string
+      description: Source of the payment
+      enum:
+        - DEBIT_CARD
+        - CREDIT_CARD
+        - PIX
+      example: CREDIT_CARD
+
+    PaymentRequest:
+      type: object
+      required:
+        - payerId
+        - paymentSource
+        - amount
+      properties:
+        payerId:
+          type: string
+          format: uuid
+          description: Unique identifier of the payer
+          example: 550e8400-e29b-41d4-a716-446655440000
+        paymentSource:
+          $ref: '#/components/schemas/PaymentSource'
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Payment amount
+          example: 100.50
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier of the payment
+          example: 1
+        payerId:
+          type: string
+          format: uuid
+          description: Unique identifier of the payer
+          example: 550e8400-e29b-41d4-a716-446655440000
+        paymentSource:
+          $ref: '#/components/schemas/PaymentSource'
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+          example: 100.50
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: Date and time when the payment was created
+          example: 2025-01-15T10:15:30Z
+
+    PaymentUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
