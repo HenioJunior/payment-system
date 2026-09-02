@@ -9,7 +9,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.eliasnogueira.paymentservice</groupId>
+    <groupId>com.henio.paymentservice</groupId>
     <artifactId>payment-service</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>payment-service</name>
@@ -24,6 +24,9 @@
         <spotbugs-maven-plugin.version>4.9.8.1</spotbugs-maven-plugin.version>
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
+
+        <testcontainers.version>2.0.5</testcontainers.version>
+        <mysql-connector-j.version>9.5.0</mysql-connector-j.version>
     </properties>
 
     <dependencies>
@@ -70,6 +73,26 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-mysql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${mysql-connector-j.version}</version>
         </dependency>
     </dependencies>
 

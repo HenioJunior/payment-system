@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:tc:mysql:9.5.0:///payments
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: root
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    org.springframework: INFO
+    org.springframework.http.converter.json: DEBUG
+    com.eliasnogueira.paymentservice: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    url: /openapi.yaml
+    path: /swagger-ui.html

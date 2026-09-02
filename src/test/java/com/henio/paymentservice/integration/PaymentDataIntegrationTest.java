@@ -4,6 +4,7 @@ import com.henio.paymentservice.model.Payment;
 import com.henio.paymentservice.model.enums.PaymentSource;
 import com.henio.paymentservice.model.enums.PaymentStatus;
 import com.henio.paymentservice.repository.PaymentRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -27,6 +28,7 @@ public class PaymentDataIntegrationTest {
     private TestEntityManager entityManager;
 
     @Test
+    @DisplayName("Should correctly sum daily payments by payerId")
     void shouldSumDailyPaymentsByPayerId() {
         UUID payerId = UUID.randomUUID();
 
@@ -97,5 +99,48 @@ public class PaymentDataIntegrationTest {
         BigDecimal total = paymentRepository.sumPaymentsByPayerIdAndDate(payerId, startOfDay, endOfDay);
 
         assertThat(total).isEqualByComparingTo(new BigDecimal("50.00"));
+    }
+
+    @Test
+    @DisplayName("Should return zero when there are no payments for the payerId on the day")
+    void shouldReturnZeroWhenNoPayments() {
+        UUID nonExistentPayerId = UUID.randomUUID();
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+
+        BigDecimal total = paymentRepository.sumPaymentsByPayerIdAndDate(nonExistentPayerId, startOfDay, endOfDay);
+
+        assertThat(total).isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    @DisplayName("Should find payments by payerId")
+    void shouldFindPaymentsByPayerId() {
+        UUID payerId = UUID.randomUUID();
+
+        var firstPayment = Payment.builder().payerId(payerId).paymentSource(PaymentSource.PIX)
+                .amount(BigDecimal.valueOf(50.00)).status(PaymentStatus.PENDING).build();
+
+        var secondPayment = Payment.builder().payerId(payerId)
+                .paymentSource(PaymentSource.CREDIT_CARD).amount(BigDecimal.valueOf(150.00))
+                .status(PaymentStatus.PAID).build();
+
+        paymentRepository.saveAll(List.of(firstPayment, secondPayment));
+
+        List<Payment> payments = paymentRepository.findAllByPayerId(payerId);
+
+        assertThat(payments).hasSize(2);
+        assertThat(payments).extracting(Payment::getPayerId).containsOnly(payerId);
+        assertThat(payments).extracting(Payment::getAmount)
+                .contains(BigDecimal.valueOf(50.00), BigDecimal.valueOf(150.00));
+    }
+
+    @Test
+    @DisplayName("Should return empty list when there are no payments for the payerId")
+    void shouldReturnEmptyListForNonExistentPayerId() {
+        List<Payment> payments = paymentRepository.findAllByPayerId(UUID.randomUUID());
+
+        assertThat(payments).isEmpty();
     }
 }
